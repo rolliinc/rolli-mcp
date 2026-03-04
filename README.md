@@ -1,6 +1,12 @@
-# rolli-mcp
+<p align="center">
+  <img src="logo.png" alt="Rolli IQ" width="200" />
+</p>
 
-MCP server for [Rolli IQ](https://rolli.ai) — social media search and analytics across X, Reddit, Bluesky, YouTube, LinkedIn, Facebook, Instagram, and Weibo.
+<h1 align="center">rolli-mcp</h1>
+
+<p align="center">
+  MCP server for <a href="https://rolli.ai">Rolli IQ</a> — social media search and analytics across X, Reddit, Bluesky, YouTube, LinkedIn, Facebook, Instagram, and Weibo.
+</p>
 
 ## Tools
 
