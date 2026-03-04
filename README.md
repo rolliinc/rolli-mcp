@@ -23,28 +23,9 @@ MCP server for [Rolli IQ](https://rolli.ai) — social media search and analytic
 
 You need a Rolli account with API access. Get your API token and user ID from [rolli.ai](https://rolli.ai).
 
-### Claude Desktop
+### Claude Desktop / Claude Code / VS Code / Cursor / Windsurf
 
-Add to your Claude Desktop config (`claude_desktop_config.json`):
-
-```json
-{
-  "mcpServers": {
-    "rolli": {
-      "command": "npx",
-      "args": ["-y", "@rolli/mcp"],
-      "env": {
-        "ROLLI_API_TOKEN": "your_token",
-        "ROLLI_USER_ID": "your_user_id"
-      }
-    }
-  }
-}
-```
-
-### VS Code / Cursor / Windsurf
-
-Add to your MCP settings (`.vscode/mcp.json` or equivalent):
+Add to your MCP config (`claude_desktop_config.json`, `.vscode/mcp.json`, or equivalent):
 
 ```json
 {
