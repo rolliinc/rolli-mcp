@@ -63,6 +63,17 @@ This server includes a `smithery.yaml` for deployment via [Smithery](https://smi
 **Set up a webhook:**
 > "Set my webhook URL to https://myapp.com/rolli-callback"
 
+## Development
+
+```sh
+npm ci
+npm run lint    # ESLint
+npm run build   # TypeScript
+npm test        # Vitest
+```
+
+CI runs on every push and PR to `master`. Releases published on GitHub automatically publish to npm (requires `NPM_TOKEN` repo secret).
+
 ## License
 
 MIT

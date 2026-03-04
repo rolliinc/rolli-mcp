@@ -9,6 +9,7 @@ MCP (Model Context Protocol) server for Rolli IQ — exposes social media search
 ## Commands
 
 - **Build:** `npm run build` (runs `tsc`, outputs to `build/`)
+- **Lint:** `npm run lint` (runs `eslint src/`)
 - **Test:** `npm test` (runs `vitest run`)
 - **Publish:** `npm publish --access public` (publishes to npm under the @rolli org)
 
