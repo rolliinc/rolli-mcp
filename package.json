@@ -1,0 +1,39 @@
+{
+  "name": "@rolli/mcp",
+  "version": "1.1.0",
+  "description": "MCP server for Rolli IQ — social media search and analytics across X, Reddit, Bluesky, YouTube, LinkedIn, Facebook, Instagram, and Weibo",
+  "type": "module",
+  "main": "build/index.js",
+  "bin": {
+    "rolli-mcp": "build/index.js"
+  },
+  "files": [
+    "build"
+  ],
+  "scripts": {
+    "build": "tsc",
+    "prepare": "tsc",
+    "test": "vitest run"
+  },
+  "keywords": [
+    "mcp",
+    "rolli",
+    "social-media",
+    "analytics",
+    "search",
+    "model-context-protocol"
+  ],
+  "license": "MIT",
+  "engines": {
+    "node": ">=18"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.12.1",
+    "zod": "^3.24.4"
+  },
+  "devDependencies": {
+    "@types/node": "^22.15.3",
+    "typescript": "^5.8.3",
+    "vitest": "^4.0.18"
+  }
+}

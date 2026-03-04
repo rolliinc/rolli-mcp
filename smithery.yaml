@@ -1,0 +1,25 @@
+startCommand:
+  type: stdio
+  configSchema:
+    type: object
+    required:
+      - apiToken
+      - userId
+    properties:
+      apiToken:
+        type: string
+        title: Rolli API Token
+        description: Your Rolli API token
+      userId:
+        type: string
+        title: Rolli User ID
+        description: Your Rolli user ID
+  commandFunction: |-
+    (config) => ({
+      command: "npx",
+      args: ["-y", "@rolli/mcp"],
+      env: {
+        ROLLI_API_TOKEN: config.apiToken,
+        ROLLI_USER_ID: config.userId,
+      },
+    })
