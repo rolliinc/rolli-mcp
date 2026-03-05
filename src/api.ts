@@ -11,6 +11,8 @@ if (!ROLLI_API_TOKEN) {
   process.exit(1);
 }
 
+const REQUEST_TIMEOUT_MS = 30_000;
+
 const headers: Record<string, string> = {
   "X-ROLLI-TOKEN": ROLLI_API_TOKEN,
   "X-ROLLI-USER-ID": ROLLI_USER_ID,
@@ -31,7 +33,10 @@ function sanitizeErrorText(text: string): string {
 }
 
 export async function apiGet(path: string): Promise<unknown> {
-  const res = await fetch(`${BASE_URL}${path}`, { headers });
+  const res = await fetch(`${BASE_URL}${path}`, {
+    headers,
+    signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS),
+  });
   if (!res.ok) {
     const text = await res.text();
     throw new ApiError(res.status, `API error ${res.status}: ${sanitizeErrorText(text)}`);
@@ -44,6 +49,7 @@ export async function apiPost(path: string, body: unknown): Promise<unknown> {
     method: "POST",
     headers,
     body: JSON.stringify(body),
+    signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS),
   });
   if (!res.ok) {
     const text = await res.text();
@@ -57,6 +63,7 @@ export async function apiPut(path: string, body: unknown): Promise<unknown> {
     method: "PUT",
     headers,
     body: JSON.stringify(body),
+    signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS),
   });
   if (!res.ok) {
     const text = await res.text();

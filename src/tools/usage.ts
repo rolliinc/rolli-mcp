@@ -9,6 +9,7 @@ export function register(server: McpServer) {
     {
       month: z
         .string()
+        .regex(/^\d{4}-\d{2}$/, "Must be YYYY-MM")
         .optional()
         .describe("Month to query (YYYY-MM format). Omit to get the last 12 months."),
     },

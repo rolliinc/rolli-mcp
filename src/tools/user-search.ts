@@ -18,7 +18,7 @@ export function register(server: McpServer) {
         .enum(["all", "started", "finished", "pending", "failed"])
         .optional()
         .describe("Filter by status (default: all)"),
-      page: z.number().optional().describe("Page number (100 results per page)"),
+      page: z.number().int().positive().optional().describe("Page number (100 results per page)"),
     },
     async (params) => {
       try {
@@ -38,10 +38,10 @@ export function register(server: McpServer) {
     "user_search",
     "Create a user profile search on a social media platform. Polls until the search is complete and returns the full results.",
     {
-      query: z.string().describe("Username or profile URL to search"),
+      query: z.string().min(1).max(500).describe("Username or profile URL to search"),
       platform: z.enum(["twitter", "facebook", "instagram"]).describe("Platform to search"),
-      start_date: z.string().optional().describe("Start date (YYYY-MM-DD)"),
-      end_date: z.string().optional().describe("End date (YYYY-MM-DD)"),
+      start_date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "Must be YYYY-MM-DD").optional().describe("Start date (YYYY-MM-DD)"),
+      end_date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "Must be YYYY-MM-DD").optional().describe("End date (YYYY-MM-DD)"),
     },
     async (params) => {
       try {
@@ -79,7 +79,7 @@ export function register(server: McpServer) {
     "get_user_search",
     "Get results for a user search by ID. Returns profile info, metrics, and content analysis.",
     {
-      id: z.number().describe("User search ID"),
+      id: z.number().int().positive().describe("User search ID"),
     },
     async (params) => {
       try {

@@ -7,7 +7,7 @@ export function register(server: McpServer) {
     "get_topic_tree",
     "Get the conversation topic tree for a keyword search. Shows how topics and subtopics are distributed across the search results.",
     {
-      search_id: z.number().describe("Keyword search ID"),
+      search_id: z.number().int().positive().describe("Keyword search ID"),
       platform: z
         .enum(["twitter", "bluesky", "youtube"])
         .optional()

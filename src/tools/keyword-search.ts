@@ -18,7 +18,7 @@ export function register(server: McpServer) {
         .enum(["all", "started", "finished", "pending", "failed"])
         .optional()
         .describe("Filter by status (default: all)"),
-      page: z.number().optional().describe("Page number (100 results per page)"),
+      page: z.number().int().positive().optional().describe("Page number (100 results per page)"),
     },
     async (params) => {
       try {
@@ -38,14 +38,14 @@ export function register(server: McpServer) {
     "keyword_search",
     "Create a keyword/hashtag search across social media platforms (X, Reddit, Bluesky, YouTube, LinkedIn, Facebook, Instagram, Weibo). Polls until the search is complete and returns the full results.",
     {
-      query: z.string().describe("Search query (keyword or hashtag)"),
+      query: z.string().min(1).max(500).describe("Search query (keyword or hashtag)"),
       platforms: z
         .array(z.enum(["twitter", "reddit", "bluesky", "youtube", "linkedin", "facebook", "instagram", "weibo"]))
         .optional()
         .describe("Platforms to search (default: twitter, reddit, bluesky, youtube)"),
-      start_date: z.string().optional().describe("Start date (YYYY-MM-DD)"),
-      end_date: z.string().optional().describe("End date (YYYY-MM-DD)"),
-      max_post: z.number().optional().describe("Maximum number of posts to retrieve (default: 100)"),
+      start_date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "Must be YYYY-MM-DD").optional().describe("Start date (YYYY-MM-DD)"),
+      end_date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "Must be YYYY-MM-DD").optional().describe("End date (YYYY-MM-DD)"),
+      max_post: z.number().int().positive().max(10000).optional().describe("Maximum number of posts to retrieve (default: 100)"),
     },
     async (params) => {
       try {
@@ -82,7 +82,7 @@ export function register(server: McpServer) {
     "get_keyword_search",
     "Get results for a keyword search by ID. Returns search status, analytics summary, and posts.",
     {
-      id: z.number().describe("Keyword search ID"),
+      id: z.number().int().positive().describe("Keyword search ID"),
     },
     async (params) => {
       try {
