@@ -23,8 +23,8 @@
         },
         {
           "name": "ROLLI_USER_ID",
-          "description": "Rolli user ID",
-          "isRequired": true,
+          "description": "Rolli user ID (optional, defaults to \"rolli-mcp\")",
+          "isRequired": false,
           "isSecret": false,
           "format": "string"
         }

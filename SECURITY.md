@@ -18,9 +18,9 @@ We will acknowledge your report within 48 hours and aim to provide a fix within 
 
 ## Security Considerations
 
-This package is an MCP (Model Context Protocol) server that requires two environment variables:
+This package is an MCP (Model Context Protocol) server that uses the following environment variables:
 
-- `ROLLI_API_TOKEN` — Your Rolli API authentication token
-- `ROLLI_USER_ID` — Your Rolli user ID
+- `ROLLI_API_TOKEN` — Required. Your Rolli API authentication token.
+- `ROLLI_USER_ID` — Optional. Your Rolli user ID (defaults to `"rolli-mcp"`).
 
 These credentials are read from environment variables at startup and are never logged, stored on disk, or transmitted to any endpoint other than the official Rolli API (`https://rolli.ai/api`).

@@ -34,6 +34,6 @@ The `keyword_search` and `user_search` tools poll the API until the search finis
 ## Environment Variables
 
 - `ROLLI_API_TOKEN` — Required. Rolli API token.
-- `ROLLI_USER_ID` — Required. Rolli user ID.
-
-Both must be set or the server exits on startup.
+- `ROLLI_USER_ID` — Optional. Rolli user ID. Defaults to `"rolli-mcp"` if not set.
+- `ROLLI_POLL_INTERVAL_MS` — Optional. Polling interval in ms for search completion. Defaults to `5000`.
+- `ROLLI_MAX_POLL_MS` — Optional. Max polling duration in ms before timeout. Defaults to `600000` (10 minutes).

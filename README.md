@@ -31,7 +31,7 @@
 
 ## Setup
 
-You need a Rolli account with API access. Get your API token and user ID from [rolli.ai](https://rolli.ai).
+You need a Rolli account with API access. Get your API token from [rolli.ai](https://rolli.ai).
 
 ### Claude Desktop / Claude Code / VS Code / Cursor / Windsurf
 
@@ -44,17 +44,26 @@ Add to your MCP config (`claude_desktop_config.json`, `.vscode/mcp.json`, or equ
       "command": "npx",
       "args": ["-y", "@rolli/mcp"],
       "env": {
-        "ROLLI_API_TOKEN": "your_token",
-        "ROLLI_USER_ID": "your_user_id"
+        "ROLLI_API_TOKEN": "your_token"
       }
     }
   }
 }
 ```
 
+`ROLLI_USER_ID` is optional and defaults to `"rolli-mcp"`. Set it to override with your own user ID.
+
+### Optional Environment Variables
+
+| Variable | Default | Description |
+|----------|---------|-------------|
+| `ROLLI_USER_ID` | `"rolli-mcp"` | User ID sent with API requests |
+| `ROLLI_POLL_INTERVAL_MS` | `5000` | Polling interval (ms) when waiting for search results |
+| `ROLLI_MAX_POLL_MS` | `600000` | Max time (ms) to wait before search timeout (default: 10 min) |
+
 ### Smithery
 
-This server includes a `smithery.yaml` for deployment via [Smithery](https://smithery.ai). It will prompt for your API token and user ID during setup.
+This server includes a `smithery.yaml` for deployment via [Smithery](https://smithery.ai). It will prompt for your API token during setup.
 
 ## Usage Examples
 
