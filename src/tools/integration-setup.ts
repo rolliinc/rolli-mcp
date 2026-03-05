@@ -21,7 +21,7 @@ export function register(server: McpServer) {
     "update_integration_setup",
     "Update integration configuration. Set the webhook URL that receives notifications when a search completes.",
     {
-      return_url: z.string().describe("URL that will receive webhook notifications when a search completes"),
+      return_url: z.string().url("Must be a valid URL").max(2048).describe("URL that will receive webhook notifications when a search completes"),
     },
     async (params) => {
       try {
