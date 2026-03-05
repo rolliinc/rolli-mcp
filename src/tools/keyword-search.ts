@@ -2,8 +2,8 @@ import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { z } from "zod";
 import { apiPost, apiGet } from "../api.js";
 
-const POLL_INTERVAL_MS = 5_000;
-const MAX_POLL_MS = 10 * 60 * 1_000; // 10 minutes
+const POLL_INTERVAL_MS = Number(process.env.ROLLI_POLL_INTERVAL_MS) || 5_000;
+const MAX_POLL_MS = Number(process.env.ROLLI_MAX_POLL_MS) || 10 * 60 * 1_000;
 
 function sleep(ms: number) {
   return new Promise((resolve) => setTimeout(resolve, ms));

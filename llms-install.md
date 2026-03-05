@@ -7,7 +7,10 @@ You need a Rolli account with API access. Purchase at [rolli.ai](https://rolli.a
 Required environment variables:
 
 - `ROLLI_API_TOKEN` — Your Rolli API token
-- `ROLLI_USER_ID` — Your Rolli user ID
+
+Optional environment variables:
+
+- `ROLLI_USER_ID` — Your Rolli user ID (defaults to `"rolli-mcp"`)
 
 ## Installation
 
@@ -20,8 +23,7 @@ Add the following to your MCP client configuration:
       "command": "npx",
       "args": ["-y", "@rolli/mcp"],
       "env": {
-        "ROLLI_API_TOKEN": "your_token",
-        "ROLLI_USER_ID": "your_user_id"
+        "ROLLI_API_TOKEN": "your_token"
       }
     }
   }
