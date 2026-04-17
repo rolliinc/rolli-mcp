@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## What This Is
 
-MCP (Model Context Protocol) server for Rolli IQ — exposes social media search and analytics tools (keyword search, user search, topic trees, post retrieval) across X, Reddit, Bluesky, YouTube, LinkedIn, Facebook, Instagram, and Weibo.
+MCP (Model Context Protocol) server for Rolli IQ — exposes social media search and analytics tools (keyword search, user search, topic trees, post retrieval) across X, Reddit, YouTube, Facebook, Instagram, Threads, Bluesky, and more.
 
 ## Commands
 

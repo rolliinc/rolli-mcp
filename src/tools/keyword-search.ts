@@ -36,7 +36,7 @@ export function register(server: McpServer) {
 
   server.tool(
     "keyword_search",
-    "Create a keyword/hashtag search across social media platforms (X, Reddit, Bluesky, YouTube, LinkedIn, Facebook, Instagram, Weibo). Polls until the search is complete and returns the full results.",
+    "Create a keyword/hashtag search across social media platforms (X, Reddit, YouTube, Facebook, Instagram, Threads, Bluesky, and more). Polls until the search is complete and returns the full results.",
     {
       query: z.string().min(1).max(500).describe("Search query (keyword or hashtag)"),
       platforms: z
