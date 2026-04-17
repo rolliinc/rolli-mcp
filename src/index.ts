@@ -11,7 +11,7 @@ import { register as registerUsage } from "./tools/usage.js";
 
 const server = new McpServer({
   name: "rolli-mcp",
-  version: "1.1.7",
+  version: "1.1.8",
 });
 
 registerKeywordSearch(server);

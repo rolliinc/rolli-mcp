@@ -5,7 +5,7 @@
 <h1 align="center">rolli-mcp</h1>
 
 <p align="center">
-  MCP server for <a href="https://rolli.ai">Rolli IQ</a> — social media search and analytics across X, Reddit, Bluesky, YouTube, LinkedIn, Facebook, Instagram, and Weibo.
+  MCP server for <a href="https://rolli.ai">Rolli IQ</a> — social media search and analytics across X, Reddit, YouTube, Facebook, Instagram, Threads, Bluesky, and more.
 </p>
 
 <a href="https://glama.ai/mcp/servers/@rolliinc/rolli-mcp">

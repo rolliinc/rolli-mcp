@@ -47,4 +47,4 @@ Add the following to your MCP client configuration:
 
 ## Supported Platforms
 
-X (Twitter), Reddit, Bluesky, YouTube, LinkedIn, Facebook, Instagram, and Weibo.
+X (Twitter), Reddit, YouTube, Facebook, Instagram, Threads, Bluesky, and more.
