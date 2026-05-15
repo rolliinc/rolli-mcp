@@ -22,6 +22,9 @@
 | `list_user_searches` | List all user searches, filtered by status |
 | `user_search` | Create a user profile search and return results when complete |
 | `get_user_search` | Get user search results (profile, metrics, content analysis) |
+| `list_expert_searches` | List all expert searches, filtered by status |
+| `expert_search` | Find experts matching a natural-language query and return results when complete |
+| `get_expert_search` | Get expert search results (recommended experts with AI-generated match summaries) |
 | `get_topic_tree` | Get conversation topic tree for a keyword search |
 | `get_keyword_search_posts` | Get raw posts from a keyword search |
 | `get_user_search_posts` | Get raw posts from a user search |

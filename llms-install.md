@@ -38,6 +38,9 @@ Add the following to your MCP client configuration:
 - `user_search` — Search for user profiles across social media platforms
 - `list_user_searches` — List all user searches
 - `get_user_search` — Get user search results
+- `expert_search` — Find experts matching a natural-language query
+- `list_expert_searches` — List all expert searches
+- `get_expert_search` — Get expert search results (recommended experts with AI-generated match summaries)
 - `get_topic_tree` — Get conversation topic tree for a keyword search
 - `get_keyword_search_posts` — Get raw posts from a keyword search
 - `get_user_search_posts` — Get raw posts from a user search
