@@ -12,7 +12,7 @@ import { register as registerExperts } from "./tools/experts.js";
 
 const server = new McpServer({
   name: "rolli-mcp",
-  version: "1.2.0",
+  version: "1.2.1",
 });
 
 registerKeywordSearch(server);
