@@ -8,10 +8,11 @@ import { register as registerTopicTree } from "./tools/topic-tree.js";
 import { register as registerPosts } from "./tools/posts.js";
 import { register as registerIntegrationSetup } from "./tools/integration-setup.js";
 import { register as registerUsage } from "./tools/usage.js";
+import { register as registerExperts } from "./tools/experts.js";
 
 const server = new McpServer({
   name: "rolli-mcp",
-  version: "1.1.8",
+  version: "1.2.0",
 });
 
 registerKeywordSearch(server);
@@ -20,6 +21,7 @@ registerTopicTree(server);
 registerPosts(server);
 registerIntegrationSetup(server);
 registerUsage(server);
+registerExperts(server);
 
 const transport = new StdioServerTransport();
 await server.connect(transport);
