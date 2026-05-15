@@ -6,12 +6,12 @@
     "url": "https://github.com/rolliinc/rolli-mcp",
     "source": "github"
   },
-  "version": "1.2.0",
+  "version": "1.2.1",
   "packages": [
     {
       "registryType": "npm",
       "identifier": "@rolli/mcp",
-      "version": "1.2.0",
+      "version": "1.2.1",
       "transport": { "type": "stdio" },
       "environmentVariables": [
         {
