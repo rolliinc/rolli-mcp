@@ -28,6 +28,21 @@
 | `get_topic_tree` | Get conversation topic tree for a keyword search |
 | `get_keyword_search_posts` | Get raw posts from a keyword search |
 | `get_user_search_posts` | Get raw posts from a user search |
+| `list_agent_runs` | List Rolli Agent runs (AI-driven social intelligence investigations) |
+| `start_agent_run` | Start a Rolli Agent investigation and return the markdown report when complete |
+| `get_agent_run` | Get a Rolli Agent run by ID (progress while running, full report when complete) |
+| `cancel_agent_run` | Cancel a pending or running Rolli Agent run |
+| `rerun_agent_run` | Retry a failed, waiting, or stuck Rolli Agent run |
+| `update_agent_run` | Pin or rename a Rolli Agent run |
+| `delete_agent_run` | Soft-delete a completed or failed Rolli Agent run |
+| `list_agent_schedules` | List Rolli Agent scheduled reports |
+| `create_agent_schedule` | Create a recurring Rolli Agent report (daily/weekly/monthly/once) |
+| `get_agent_schedule` | Get a Rolli Agent schedule with its 10 most recent runs |
+| `update_agent_schedule` | Update a Rolli Agent schedule |
+| `delete_agent_schedule` | Permanently delete a Rolli Agent schedule |
+| `pause_agent_schedule` | Pause a Rolli Agent schedule |
+| `resume_agent_schedule` | Resume a paused Rolli Agent schedule |
+| `list_agent_schedule_runs` | List the full execution history of a Rolli Agent schedule |
 | `get_integration_setup` | Get current integration settings (webhook URL, name) |
 | `update_integration_setup` | Set the webhook URL for search completion notifications |
 | `get_usage` | Get API usage data and per-user breakdowns |

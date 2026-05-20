@@ -44,6 +44,21 @@ Add the following to your MCP client configuration:
 - `get_topic_tree` — Get conversation topic tree for a keyword search
 - `get_keyword_search_posts` — Get raw posts from a keyword search
 - `get_user_search_posts` — Get raw posts from a user search
+- `start_agent_run` — Start a Rolli Agent investigation and return the markdown report when complete
+- `list_agent_runs` — List Rolli Agent runs
+- `get_agent_run` — Get a Rolli Agent run (progress or full report)
+- `cancel_agent_run` — Cancel a pending or running Rolli Agent run
+- `rerun_agent_run` — Retry a failed Rolli Agent run
+- `update_agent_run` — Pin or rename a Rolli Agent run
+- `delete_agent_run` — Soft-delete a Rolli Agent run
+- `create_agent_schedule` — Create a recurring Rolli Agent report (daily/weekly/monthly/once)
+- `list_agent_schedules` — List Rolli Agent scheduled reports
+- `get_agent_schedule` — Get a Rolli Agent schedule with recent runs
+- `update_agent_schedule` — Update a Rolli Agent schedule
+- `delete_agent_schedule` — Permanently delete a Rolli Agent schedule
+- `pause_agent_schedule` — Pause a Rolli Agent schedule
+- `resume_agent_schedule` — Resume a paused Rolli Agent schedule
+- `list_agent_schedule_runs` — List execution history for a Rolli Agent schedule
 - `get_integration_setup` — Get current integration settings
 - `update_integration_setup` — Set webhook URL for notifications
 - `get_usage` — Get API usage data
