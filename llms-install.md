@@ -66,3 +66,11 @@ Add the following to your MCP client configuration:
 ## Supported Platforms
 
 X (Twitter), Reddit, YouTube, Facebook, Instagram, Threads, Bluesky, and more.
+
+## Optional X/Twitter Source Context
+
+When a workflow needs reviewed account-scoped X/Twitter evidence before a Rolli
+search or agent report, collect that evidence with an approved OpenClaw workflow
+such as [TweetClaw](https://github.com/Xquik-dev/tweetclaw). Pass Rolli only
+reviewed handles, post URLs, post IDs, excerpts, or summary notes. Do not pass
+API tokens, cookies, sessions, or account credentials between tools.
