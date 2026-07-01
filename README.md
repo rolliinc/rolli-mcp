@@ -100,6 +100,20 @@ This server includes a `smithery.yaml` for deployment via [Smithery](https://smi
 **Set up a webhook:**
 > "Set my webhook URL to https://myapp.com/rolli-callback"
 
+## Optional X/Twitter Source Context
+
+Rolli is useful for cross-platform social search, topic trees, user analysis,
+and scheduled social intelligence reports. If an agent also needs reviewed
+account-scoped X/Twitter source evidence before a Rolli investigation, collect
+that evidence in an approved OpenClaw workflow such as
+[TweetClaw](https://github.com/Xquik-dev/tweetclaw), then pass only the
+reviewed handles, post URLs, post IDs, excerpts, or summary notes into Rolli
+prompts.
+
+Keep Rolli and TweetClaw credentials separate. Do not transfer API tokens,
+cookies, sessions, or account credentials between tools. Treat TweetClaw output
+as source context for Rolli searches and reports, not as publishing approval.
+
 ## Development
 
 ```sh
