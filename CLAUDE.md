@@ -19,6 +19,7 @@ TypeScript ESM project using `@modelcontextprotocol/sdk` and `zod`.
 
 - `src/index.ts` — Entry point. Creates `McpServer`, registers all tools, connects via `StdioServerTransport`.
 - `src/api.ts` — HTTP client wrapping `fetch` for the Rolli APIs. Reads `ROLLI_API_TOKEN` and `ROLLI_USER_ID` from env vars. Exports `apiGet`/`apiPost`/`apiPut`/`apiPatch`/`apiDelete` (base `https://rolli.ai/api`) and `agentGet`/`agentPost`/`agentPatch`/`agentDelete` (base `https://agent.rolli.ai`, overridable via `ROLLI_AGENT_BASE_URL`).
+- `src/tools/_shared.ts` — Cross-cutting helpers: `pollUntilDone` (status polling with results-settling — a search reporting `finished` with a null `results` column is NOT terminal; the poll waits up to an extra settle window and the tool returns `status: "results_pending"` instead of ever presenting success with a null payload), `serializeCapped` (deterministic response-size cap, default 100 KB — trims the largest arrays from the end, keeps analytics/scalar fields, adds `truncated: true` + a `truncation` report), `preflightCredits` (checks `GET /iq/credits` before agent runs; fails open if the endpoint is unavailable), `mergeUsageAndCredits`, `annotateResultsPending`, `stripReportHtml`, `errorToText`, and the config setters. **This file must be kept byte-identical to `rolli-remote-mcp/src/tools/_shared.ts`** — the two servers are required to behave exactly the same; verify with `diff` after any change. The file is env-free: `src/index.ts` reads env vars and calls the setters at startup.
 - `src/tools/` — Each file exports a `register(server: McpServer)` function that registers one or more MCP tools:
   - `keyword-search.ts` — `list_keyword_searches`, `keyword_search`, `get_keyword_search`
   - `user-search.ts` — `list_user_searches`, `user_search`, `get_user_search`
@@ -32,7 +33,7 @@ TypeScript ESM project using `@modelcontextprotocol/sdk` and `zod`.
 
 All tools follow the same pattern: validate params with zod, call the Rolli API via `apiGet`/`apiPost`/`apiPut`/`apiPatch`/`apiDelete` (or the `agent*` equivalents for Rolli Agent endpoints), return JSON as text content. Errors are caught and returned with `isError: true`.
 
-The `keyword_search`, `user_search`, `expert_search`, and `start_agent_run` tools poll the API until the operation finishes (or fails/times out after 10 minutes) before returning results.
+The `keyword_search`, `user_search`, and `expert_search` tools poll the API until the operation finishes (or fails/times out after 10 minutes) before returning results; a search that reports success before its results are written keeps polling through a settle window and returns `status: "results_pending"` rather than success-with-null. `start_agent_run` preflights the IQ credit balance (failing at 0% with `insufficient_credits` when short), polls inline for up to 2 minutes, then falls back to returning the run ID for async retrieval via `get_agent_run` (matching the remote server). `get_usage` merges the `/iq/credits` balance (`credits_remaining`, `credits_limit`, `period_reset_date`) into the usage payload. Large responses are capped (~100 KB) with `truncated: true` — full post data stays available through the posts tools with a platform filter.
 
 ## Environment Variables
 
@@ -40,3 +41,5 @@ The `keyword_search`, `user_search`, `expert_search`, and `start_agent_run` tool
 - `ROLLI_USER_ID` — Optional. Rolli user ID. Defaults to `"rolli-mcp"` if not set.
 - `ROLLI_POLL_INTERVAL_MS` — Optional. Polling interval in ms for search completion. Defaults to `5000`.
 - `ROLLI_MAX_POLL_MS` — Optional. Max polling duration in ms before timeout. Defaults to `600000` (10 minutes).
+- `ROLLI_MAX_RESPONSE_BYTES` — Optional. Max serialized tool-response size in bytes. Defaults to `100000`.
+- `ROLLI_RESULTS_SETTLE_MS` — Optional. Extra polling window for a finished search whose results are not yet written. Defaults to `45000`.

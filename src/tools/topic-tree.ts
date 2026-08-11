@@ -1,6 +1,7 @@
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { z } from "zod";
 import { apiGet } from "../api.js";
+import { errorToText, serializeCapped } from "./_shared.js";
 
 export function register(server: McpServer) {
   server.tool(
@@ -9,18 +10,35 @@ export function register(server: McpServer) {
     {
       search_id: z.number().int().positive().describe("Keyword search ID"),
       platform: z
-        .enum(["twitter", "bluesky", "youtube"])
+        .enum([
+          "twitter",
+          "reddit",
+          "bluesky",
+          "youtube",
+          "facebook",
+          "instagram",
+          "threads",
+        ])
         .optional()
         .describe("Filter by platform"),
     },
     async (params) => {
       try {
-        const query = params.platform ? `?platform=${params.platform}` : "";
-        const data = await apiGet(`/iq/keyword_search/${params.search_id}/topic_tree${query}`);
-        return { content: [{ type: "text", text: JSON.stringify(data, null, 2) }] };
+        const query = new URLSearchParams();
+        if (params.platform) query.set("platform", params.platform);
+        const qs = query.toString() ? `?${query}` : "";
+        const data = await apiGet(
+          `/iq/keyword_search/${params.search_id}/topic_tree${qs}`,
+        );
+        return {
+          content: [{ type: "text", text: serializeCapped(data) }],
+        };
       } catch (e) {
-        return { content: [{ type: "text", text: String(e) }], isError: true };
+        return {
+          content: [{ type: "text", text: errorToText(e) }],
+          isError: true,
+        };
       }
-    }
+    },
   );
 }

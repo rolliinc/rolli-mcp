@@ -125,7 +125,7 @@ describe("keyword_search", () => {
 
   it("passes all optional params to API", async () => {
     mockApiPost.mockResolvedValue({ id: 103 });
-    mockApiGet.mockResolvedValue({ id: 103, status: "finished" });
+    mockApiGet.mockResolvedValue({ id: 103, status: "finished", results: {} });
 
     const promise = tools.keyword_search({
       query: "test",
@@ -144,6 +144,50 @@ describe("keyword_search", () => {
       end_date: "2026-02-01",
       max_post: 50,
     });
+  });
+
+  it("resolves without timer advancement when terminal on first poll", async () => {
+    mockApiPost.mockResolvedValue({ id: 105 });
+    mockApiGet.mockResolvedValue({ id: 105, status: "finished", results: {} });
+
+    const result = await tools.keyword_search({ query: "test" });
+
+    expect(mockApiGet).toHaveBeenCalledTimes(1);
+    expect(result.isError).toBeUndefined();
+    expect(JSON.parse(result.content[0].text).status).toBe("finished");
+  });
+
+  it("returns results_pending when finished but results never materialize", async () => {
+    mockApiPost.mockResolvedValue({ id: 106 });
+    mockApiGet.mockResolvedValue({ id: 106, status: "finished", results: null });
+
+    const promise = tools.keyword_search({ query: "test" });
+    // Settle window is 45s; polls run every 5s.
+    for (let i = 0; i < 11; i++) {
+      await vi.advanceTimersByTimeAsync(5000);
+    }
+    const result = await promise;
+
+    expect(result.isError).toBeUndefined();
+    const payload = JSON.parse(result.content[0].text);
+    expect(payload.id).toBe(106);
+    expect(payload.status).toBe("results_pending");
+    expect(payload.message).toContain("get_keyword_search");
+  });
+
+  it("keeps polling through finished-without-results until results arrive", async () => {
+    mockApiPost.mockResolvedValue({ id: 107 });
+    mockApiGet
+      .mockResolvedValueOnce({ id: 107, status: "finished" })
+      .mockResolvedValueOnce({ id: 107, status: "finished", results: { total: 3 } });
+
+    const promise = tools.keyword_search({ query: "test" });
+    await vi.advanceTimersByTimeAsync(5000);
+    const result = await promise;
+
+    expect(mockApiGet).toHaveBeenCalledTimes(2);
+    expect(result.isError).toBeUndefined();
+    expect(JSON.parse(result.content[0].text).results).toEqual({ total: 3 });
   });
 
   it("times out after 10 minutes", async () => {
@@ -193,6 +237,45 @@ describe("get_keyword_search", () => {
     const result = await tools.get_keyword_search({ id: 1 });
     expect(mockApiGet).toHaveBeenCalledWith("/iq/keyword_search/1");
     expect(JSON.parse(result.content[0].text)).toEqual(mockData);
+  });
+
+  it("annotates a finished response with null results as results_pending", async () => {
+    mockApiGet.mockResolvedValue({
+      keyword_search: { id: 2, status: "finished", results: null },
+    });
+
+    const result = await tools.get_keyword_search({ id: 2 });
+    expect(result.isError).toBeUndefined();
+    const payload = JSON.parse(result.content[0].text);
+    expect(payload.results_pending).toBe(true);
+    expect(payload.results_pending_note).toContain("get_keyword_search");
+    expect(payload.keyword_search).toEqual({
+      id: 2,
+      status: "finished",
+      results: null,
+    });
+  });
+
+  it("passes a complete finished response through unchanged", async () => {
+    const mockData = {
+      keyword_search: { id: 3, status: "finished", results: { total: 5 } },
+    };
+    mockApiGet.mockResolvedValue(mockData);
+
+    const result = await tools.get_keyword_search({ id: 3 });
+    const payload = JSON.parse(result.content[0].text);
+    expect(payload).toEqual(mockData);
+    expect(payload.results_pending).toBeUndefined();
+  });
+
+  it("does not annotate a non-finished response", async () => {
+    mockApiGet.mockResolvedValue({ id: 4, status: "started" });
+
+    const result = await tools.get_keyword_search({ id: 4 });
+    expect(JSON.parse(result.content[0].text)).toEqual({
+      id: 4,
+      status: "started",
+    });
   });
 
   it("returns error on API failure", async () => {

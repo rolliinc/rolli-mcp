@@ -154,6 +154,41 @@ describe("user_search", () => {
     });
   });
 
+  it("returns results_pending for a twitter search finished without results", async () => {
+    mockApiPost.mockResolvedValue({ id: 205 });
+    mockApiGet.mockResolvedValue({ id: 205, status: "finished", results: null });
+
+    const promise = tools.user_search({
+      query: "testuser",
+      platform: "twitter",
+    });
+    // Settle window is 45s; polls run every 5s.
+    for (let i = 0; i < 11; i++) {
+      await vi.advanceTimersByTimeAsync(5000);
+    }
+    const result = await promise;
+
+    expect(result.isError).toBeUndefined();
+    const payload = JSON.parse(result.content[0].text);
+    expect(payload.id).toBe(205);
+    expect(payload.status).toBe("results_pending");
+    expect(payload.message).toContain("get_user_search");
+  });
+
+  it("treats finished-without-results as terminal for non-twitter platforms", async () => {
+    mockApiPost.mockResolvedValue({ id: 206 });
+    mockApiGet.mockResolvedValue({ id: 206, status: "finished" });
+
+    const result = await tools.user_search({
+      query: "testuser",
+      platform: "facebook",
+    });
+
+    expect(mockApiGet).toHaveBeenCalledTimes(1);
+    expect(result.isError).toBeUndefined();
+    expect(JSON.parse(result.content[0].text).status).toBe("finished");
+  });
+
   it("times out after 10 minutes", async () => {
     mockApiPost.mockResolvedValue({ id: 204 });
     mockApiGet.mockResolvedValue({ id: 204, status: "started" });
@@ -209,6 +244,44 @@ describe("get_user_search", () => {
 
     const result = await tools.get_user_search({ id: 1 });
     expect(mockApiGet).toHaveBeenCalledWith("/iq/user_search/1");
+    expect(JSON.parse(result.content[0].text)).toEqual(mockData);
+  });
+
+  it("annotates a finished twitter response with null results as results_pending", async () => {
+    mockApiGet.mockResolvedValue({
+      id: 2,
+      platform: "twitter",
+      status: "finished",
+      results: null,
+    });
+
+    const result = await tools.get_user_search({ id: 2 });
+    expect(result.isError).toBeUndefined();
+    const payload = JSON.parse(result.content[0].text);
+    expect(payload.results_pending).toBe(true);
+    expect(payload.results_pending_note).toContain("get_user_search");
+  });
+
+  it("passes a complete twitter response through unchanged", async () => {
+    const mockData = {
+      id: 3,
+      platform: "twitter",
+      status: "finished",
+      results: { tweets: 12 },
+    };
+    mockApiGet.mockResolvedValue(mockData);
+
+    const result = await tools.get_user_search({ id: 3 });
+    const payload = JSON.parse(result.content[0].text);
+    expect(payload).toEqual(mockData);
+    expect(payload.results_pending).toBeUndefined();
+  });
+
+  it("does not annotate non-twitter responses even when results are missing", async () => {
+    const mockData = { id: 4, platform: "facebook", status: "finished" };
+    mockApiGet.mockResolvedValue(mockData);
+
+    const result = await tools.get_user_search({ id: 4 });
     expect(JSON.parse(result.content[0].text)).toEqual(mockData);
   });
 

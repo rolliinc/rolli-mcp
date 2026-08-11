@@ -1,8 +1,9 @@
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { z } from "zod";
 import { agentGet, agentPost, agentPatch, agentDelete } from "../api.js";
+import { errorToText } from "./_shared.js";
 
-const PLATFORMS = ["twitter", "reddit", "bluesky", "youtube", "threads", "facebook", "weibo"] as const;
+const PLATFORMS = ["twitter", "reddit", "bluesky", "youtube", "threads", "facebook"] as const;
 const MODES = ["trend_briefing", "monitoring", "competitive_intel"] as const;
 const RECURRENCE_TYPES = ["daily", "weekly", "monthly", "once"] as const;
 
@@ -25,7 +26,7 @@ export function register(server: McpServer) {
         const data = await agentGet(`/api/v1/schedules${query}`);
         return { content: [{ type: "text", text: JSON.stringify(data, null, 2) }] };
       } catch (e) {
-        return { content: [{ type: "text", text: String(e) }], isError: true };
+        return { content: [{ type: "text", text: errorToText(e) }], isError: true };
       }
     }
   );
@@ -83,7 +84,7 @@ export function register(server: McpServer) {
         const data = await agentPost("/api/v1/schedules", body);
         return { content: [{ type: "text", text: JSON.stringify(data, null, 2) }] };
       } catch (e) {
-        return { content: [{ type: "text", text: String(e) }], isError: true };
+        return { content: [{ type: "text", text: errorToText(e) }], isError: true };
       }
     }
   );
@@ -99,7 +100,7 @@ export function register(server: McpServer) {
         const data = await agentGet(`/api/v1/schedules/${params.id}`);
         return { content: [{ type: "text", text: JSON.stringify(data, null, 2) }] };
       } catch (e) {
-        return { content: [{ type: "text", text: String(e) }], isError: true };
+        return { content: [{ type: "text", text: errorToText(e) }], isError: true };
       }
     }
   );
@@ -137,7 +138,7 @@ export function register(server: McpServer) {
         const data = await agentPatch(`/api/v1/schedules/${id}`, body);
         return { content: [{ type: "text", text: JSON.stringify(data, null, 2) }] };
       } catch (e) {
-        return { content: [{ type: "text", text: String(e) }], isError: true };
+        return { content: [{ type: "text", text: errorToText(e) }], isError: true };
       }
     }
   );
@@ -153,7 +154,7 @@ export function register(server: McpServer) {
         const data = await agentDelete(`/api/v1/schedules/${params.id}`);
         return { content: [{ type: "text", text: JSON.stringify(data, null, 2) }] };
       } catch (e) {
-        return { content: [{ type: "text", text: String(e) }], isError: true };
+        return { content: [{ type: "text", text: errorToText(e) }], isError: true };
       }
     }
   );
@@ -169,7 +170,7 @@ export function register(server: McpServer) {
         const data = await agentPost(`/api/v1/schedules/${params.id}/pause`);
         return { content: [{ type: "text", text: JSON.stringify(data, null, 2) }] };
       } catch (e) {
-        return { content: [{ type: "text", text: String(e) }], isError: true };
+        return { content: [{ type: "text", text: errorToText(e) }], isError: true };
       }
     }
   );
@@ -185,7 +186,7 @@ export function register(server: McpServer) {
         const data = await agentPost(`/api/v1/schedules/${params.id}/resume`);
         return { content: [{ type: "text", text: JSON.stringify(data, null, 2) }] };
       } catch (e) {
-        return { content: [{ type: "text", text: String(e) }], isError: true };
+        return { content: [{ type: "text", text: errorToText(e) }], isError: true };
       }
     }
   );
@@ -207,7 +208,7 @@ export function register(server: McpServer) {
         const data = await agentGet(`/api/v1/schedules/${params.id}/runs${query}`);
         return { content: [{ type: "text", text: JSON.stringify(data, null, 2) }] };
       } catch (e) {
-        return { content: [{ type: "text", text: String(e) }], isError: true };
+        return { content: [{ type: "text", text: errorToText(e) }], isError: true };
       }
     }
   );

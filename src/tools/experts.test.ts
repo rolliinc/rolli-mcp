@@ -73,7 +73,11 @@ describe("expert_search", () => {
 
   it("submits and returns results when completed on first poll", async () => {
     mockApiPost.mockResolvedValue({ id: 100 });
-    mockApiGet.mockResolvedValue({ id: 100, status: "completed", experts: [] });
+    mockApiGet.mockResolvedValue({
+      id: 100,
+      status: "completed",
+      expert_results: [],
+    });
 
     const promise = tools.expert_search({ query: "AI ethics researchers" });
     await vi.advanceTimersByTimeAsync(5000);
@@ -92,7 +96,11 @@ describe("expert_search", () => {
     mockApiGet
       .mockResolvedValueOnce({ id: 101, status: "running" })
       .mockResolvedValueOnce({ id: 101, status: "running" })
-      .mockResolvedValueOnce({ id: 101, status: "completed", experts: [] });
+      .mockResolvedValueOnce({
+        id: 101,
+        status: "completed",
+        expert_results: [],
+      });
 
     const promise = tools.expert_search({ query: "test" });
     for (let i = 0; i < 3; i++) {
@@ -117,21 +125,56 @@ describe("expert_search", () => {
     expect(result.isError).toBeUndefined();
   });
 
-  it("reads status from nested `search` key when present", async () => {
+  it("returns results_pending when completed but expert_results never materialize", async () => {
     mockApiPost.mockResolvedValue({ id: 103 });
-    mockApiGet.mockResolvedValue({ search: { id: 103, status: "completed" } });
+    mockApiGet.mockResolvedValue({
+      id: 103,
+      status: "completed",
+      expert_results: null,
+    });
+
+    const promise = tools.expert_search({ query: "test" });
+    // Settle window is 45s; polls run every 5s.
+    for (let i = 0; i < 11; i++) {
+      await vi.advanceTimersByTimeAsync(5000);
+    }
+    const result = await promise;
+
+    expect(result.isError).toBeUndefined();
+    const payload = JSON.parse(result.content[0].text);
+    expect(payload.id).toBe(103);
+    expect(payload.status).toBe("results_pending");
+    expect(payload.message).toContain("get_expert_search");
+  });
+
+  it("keeps polling through completed-without-results until results arrive", async () => {
+    mockApiPost.mockResolvedValue({ id: 106 });
+    mockApiGet
+      .mockResolvedValueOnce({ id: 106, status: "completed" })
+      .mockResolvedValueOnce({
+        id: 106,
+        status: "completed",
+        expert_results: [{ name: "Dr. Test" }],
+      });
 
     const promise = tools.expert_search({ query: "test" });
     await vi.advanceTimersByTimeAsync(5000);
     const result = await promise;
 
+    expect(mockApiGet).toHaveBeenCalledTimes(2);
     expect(result.isError).toBeUndefined();
-    expect(JSON.parse(result.content[0].text).search.status).toBe("completed");
+    expect(JSON.parse(result.content[0].text).expert_results).toEqual([
+      { name: "Dr. Test" },
+    ]);
   });
 
   it("falls back to `search.id` when top-level id is missing", async () => {
     mockApiPost.mockResolvedValue({ search: { id: 104 } });
-    mockApiGet.mockResolvedValue({ id: 104, status: "completed" });
+    mockApiGet.mockResolvedValue({
+      id: 104,
+      status: "completed",
+      expert_results: [],
+    });
 
     const promise = tools.expert_search({ query: "test" });
     await vi.advanceTimersByTimeAsync(5000);
@@ -181,12 +224,40 @@ describe("get_expert_search", () => {
   });
 
   it("returns search results by ID", async () => {
-    const mockData = { id: 1, status: "completed", experts: [] };
+    const mockData = { id: 1, status: "completed", expert_results: [] };
     mockApiGet.mockResolvedValue(mockData);
 
     const result = await tools.get_expert_search({ id: 1 });
     expect(mockApiGet).toHaveBeenCalledWith("/search/1");
     expect(JSON.parse(result.content[0].text)).toEqual(mockData);
+  });
+
+  it("annotates a completed response with null expert_results as results_pending", async () => {
+    mockApiGet.mockResolvedValue({
+      id: 2,
+      status: "completed",
+      expert_results: null,
+    });
+
+    const result = await tools.get_expert_search({ id: 2 });
+    expect(result.isError).toBeUndefined();
+    const payload = JSON.parse(result.content[0].text);
+    expect(payload.results_pending).toBe(true);
+    expect(payload.results_pending_note).toContain("get_expert_search");
+  });
+
+  it("passes a complete response through unchanged", async () => {
+    const mockData = {
+      id: 3,
+      status: "completed",
+      expert_results: [{ name: "Dr. Test" }],
+    };
+    mockApiGet.mockResolvedValue(mockData);
+
+    const result = await tools.get_expert_search({ id: 3 });
+    const payload = JSON.parse(result.content[0].text);
+    expect(payload).toEqual(mockData);
+    expect(payload.results_pending).toBeUndefined();
   });
 
   it("returns error on API failure", async () => {

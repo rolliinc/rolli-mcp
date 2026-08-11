@@ -1,6 +1,7 @@
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { z } from "zod";
 import { apiGet, apiPut } from "../api.js";
+import { errorToText } from "./_shared.js";
 
 export function register(server: McpServer) {
   server.tool(
@@ -12,7 +13,7 @@ export function register(server: McpServer) {
         const data = await apiGet("/setup");
         return { content: [{ type: "text", text: JSON.stringify(data, null, 2) }] };
       } catch (e) {
-        return { content: [{ type: "text", text: String(e) }], isError: true };
+        return { content: [{ type: "text", text: errorToText(e) }], isError: true };
       }
     }
   );
@@ -28,7 +29,7 @@ export function register(server: McpServer) {
         const data = await apiPut("/setup", { return_url: params.return_url });
         return { content: [{ type: "text", text: JSON.stringify(data, null, 2) }] };
       } catch (e) {
-        return { content: [{ type: "text", text: String(e) }], isError: true };
+        return { content: [{ type: "text", text: errorToText(e) }], isError: true };
       }
     }
   );
