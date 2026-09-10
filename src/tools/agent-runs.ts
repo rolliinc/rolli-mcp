@@ -38,9 +38,9 @@ const RUN_TERMINAL_STATUSES = ["completed", "failed"] as const;
 const INLINE_POLL_BUDGET_MS = 120_000;
 
 // The backend charges 1 IQ credit per internal search; a run at effort N can
-// consume up to N credits. The preflight uses the requested effort (default 2)
-// as the required balance so doomed runs fail at 0% instead of mid-run.
-const DEFAULT_RUN_CREDITS = 2;
+// consume up to N credits. The preflight uses the requested effort (default 4,
+// max) as the required balance so doomed runs fail at 0% instead of mid-run.
+const DEFAULT_RUN_CREDITS = 4;
 
 const agentApi = { get: agentGet };
 const iqApi = { get: apiGet };
@@ -104,7 +104,7 @@ export function register(server: McpServer) {
         .max(4)
         .optional()
         .describe(
-          "Reasoning effort: 1=low, 2=medium (default), 3=high, 4=max. Higher values let the agent perform more searches at higher cost.",
+          "Reasoning effort: 1=low, 2=medium, 3=high, 4=max (default). Higher values let the agent perform more searches at higher cost.",
         ),
       mode: z
         .enum(MODES)
@@ -125,7 +125,7 @@ export function register(server: McpServer) {
         .int()
         .positive()
         .optional()
-        .describe("Maximum posts per platform (default: 50)"),
+        .describe("Maximum posts per platform (default: 100)"),
       parent_run_id: z
         .string()
         .uuid()
@@ -158,9 +158,8 @@ export function register(server: McpServer) {
           };
         }
 
-        const body: Record<string, unknown> = { question: params.question };
-        if (params.available_credits !== undefined)
-          body.available_credits = params.available_credits;
+        // available_credits is always sent: a run without a cap would otherwise spend the whole balance.
+        const body: Record<string, unknown> = { question: params.question, available_credits: required };
         if (params.mode) body.mode = params.mode;
         if (params.time_window) body.time_window = params.time_window;
         if (params.platforms) body.platforms = params.platforms;

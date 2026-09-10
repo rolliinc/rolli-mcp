@@ -99,7 +99,7 @@ describe("start_agent_run", () => {
     await vi.advanceTimersByTimeAsync(5000);
     const result = await promise;
 
-    expect(mockAgentPost).toHaveBeenCalledWith("/api/v1/runs", { question: "Smoke test" });
+    expect(mockAgentPost).toHaveBeenCalledWith("/api/v1/runs", { question: "Smoke test", available_credits: 4 });
     expect(mockAgentGet).toHaveBeenCalledWith(`/api/v1/runs/${RUN_ID}`);
     expect(result.isError).toBeUndefined();
     expect(JSON.parse(result.content[0].text).status).toBe("completed");
@@ -191,7 +191,7 @@ describe("start_agent_run", () => {
     expect(result.isError).toBe(true);
     const payload = JSON.parse(result.content[0].text);
     expect(payload.error).toBe("insufficient_credits");
-    expect(payload.required_credits).toBe(2);
+    expect(payload.required_credits).toBe(4);
     expect(payload.available_credits).toBe(1);
     expect(payload.message).toContain("not started");
   });
@@ -218,7 +218,7 @@ describe("start_agent_run", () => {
 
     const result = await tools.start_agent_run({ question: "test" });
 
-    expect(mockAgentPost).toHaveBeenCalledWith("/api/v1/runs", { question: "test" });
+    expect(mockAgentPost).toHaveBeenCalledWith("/api/v1/runs", { question: "test", available_credits: 4 });
     expect(result.isError).toBeUndefined();
     expect(JSON.parse(result.content[0].text).status).toBe("completed");
   });
