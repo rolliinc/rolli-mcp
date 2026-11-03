@@ -78,6 +78,7 @@ Add to your MCP config (`claude_desktop_config.json`, `.vscode/mcp.json`, or equ
 | `ROLLI_USER_ID` | `"rolli-mcp"` | User ID sent with API requests |
 | `ROLLI_POLL_INTERVAL_MS` | `5000` | Polling interval (ms) when waiting for search results |
 | `ROLLI_MAX_POLL_MS` | `600000` | Max time (ms) to wait before search timeout (default: 10 min) |
+| `ROLLI_MAX_RESPONSE_BYTES` | `140000` | Max tool-response size in bytes; larger responses are trimmed (`truncated: true`). claude.ai and Claude Desktop accept ~150,000 characters per tool result, so keep it under that |
 
 ### Smithery
 

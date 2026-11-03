@@ -7,6 +7,7 @@ import {
   pollUntilDone,
   resultsPendingPayload,
   serializeCapped,
+  LARGE_RESULT_META,
 } from "./_shared.js";
 
 const api = { get: apiGet };
@@ -54,28 +55,32 @@ export function register(server: McpServer) {
     },
   );
 
-  server.tool(
+  server.registerTool(
     "user_search",
-    "Create a user profile search on a social media platform. Polls until the search is complete and returns the full results. Oversized responses are truncated (truncated: true) — retrieve complete post data with get_user_search_posts. A status of results_pending means the search succeeded but results are still being written; fetch them with get_user_search.",
     {
-      query: z
-        .string()
-        .min(1)
-        .max(500)
-        .describe("Username or profile URL to search"),
-      platform: z
-        .enum(["twitter", "facebook", "instagram"])
-        .describe("Platform to search"),
-      start_date: z
-        .string()
-        .regex(/^\d{4}-\d{2}-\d{2}$/, "Must be YYYY-MM-DD")
-        .optional()
-        .describe("Start date (YYYY-MM-DD)"),
-      end_date: z
-        .string()
-        .regex(/^\d{4}-\d{2}-\d{2}$/, "Must be YYYY-MM-DD")
-        .optional()
-        .describe("End date (YYYY-MM-DD)"),
+      description:
+        "Create a user profile search on a social media platform. Polls until the search is complete and returns the full results. Oversized responses are truncated (truncated: true) — read the complete post list in pages with get_user_search_posts (offset, limit, fields=lean). A status of results_pending means the search succeeded but results are still being written; fetch them with get_user_search.",
+      inputSchema: {
+        query: z
+          .string()
+          .min(1)
+          .max(500)
+          .describe("Username or profile URL to search"),
+        platform: z
+          .enum(["twitter", "facebook", "instagram"])
+          .describe("Platform to search"),
+        start_date: z
+          .string()
+          .regex(/^\d{4}-\d{2}-\d{2}$/, "Must be YYYY-MM-DD")
+          .optional()
+          .describe("Start date (YYYY-MM-DD)"),
+        end_date: z
+          .string()
+          .regex(/^\d{4}-\d{2}-\d{2}$/, "Must be YYYY-MM-DD")
+          .optional()
+          .describe("End date (YYYY-MM-DD)"),
+      },
+      _meta: LARGE_RESULT_META,
     },
     async (params) => {
       try {
@@ -144,11 +149,15 @@ export function register(server: McpServer) {
     },
   );
 
-  server.tool(
+  server.registerTool(
     "get_user_search",
-    "Get results for a user search by ID. Returns profile info, metrics, and content analysis. Oversized responses are truncated (truncated: true) — retrieve complete post data with get_user_search_posts. results_pending: true means the search succeeded but the backend is still writing results; retry in a few seconds.",
     {
-      id: z.number().int().positive().describe("User search ID"),
+      description:
+        "Get results for a user search by ID. Returns profile info, metrics, and content analysis. Oversized responses are truncated (truncated: true) — read the complete post list in pages with get_user_search_posts (offset, limit, fields=lean). results_pending: true means the search succeeded but the backend is still writing results; retry in a few seconds.",
+      inputSchema: {
+        id: z.number().int().positive().describe("User search ID"),
+      },
+      _meta: LARGE_RESULT_META,
     },
     async (params) => {
       try {

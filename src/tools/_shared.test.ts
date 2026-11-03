@@ -1,8 +1,11 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import {
   annotateResultsPending,
+  DEFAULT_MAX_RESPONSE_BYTES,
+  describePostsPage,
   errorToText,
   insufficientCreditsPayload,
+  LARGE_RESULT_META,
   mergeUsageAndCredits,
   pollUntilDone,
   preflightCredits,
@@ -304,6 +307,94 @@ describe("serializeCapped", () => {
     const data = { list: Array.from({ length: 100 }, () => "v".repeat(100)) };
     const out = serializeCapped(data, 3_000);
     expect(new TextEncoder().encode(out).length).toBeLessThanOrEqual(3_000);
+  });
+
+  it("accepts 140,000 bytes by default, just under the claude.ai tool-result limit", () => {
+    expect(DEFAULT_MAX_RESPONSE_BYTES).toBe(140_000);
+    setMaxResponseBytes(DEFAULT_MAX_RESPONSE_BYTES);
+    const data = { list: Array.from({ length: 130 }, () => "u".repeat(1_000)) };
+    const full = JSON.stringify(data, null, 2);
+    expect(new TextEncoder().encode(full).length).toBeGreaterThan(100_000);
+    expect(serializeCapped(data)).toBe(full);
+    const over = { list: Array.from({ length: 150 }, () => "u".repeat(1_000)) };
+    const out = serializeCapped(over);
+    expect(new TextEncoder().encode(out).length).toBeLessThanOrEqual(140_000);
+    expect((JSON.parse(out) as { truncated: boolean }).truncated).toBe(true);
+  });
+
+  it("opens with the truncation report and sums it up in one line", () => {
+    setMaxResponseBytes(50_000);
+    const parsed = JSON.parse(serializeCapped(bigPayload())) as Record<string, unknown>;
+    expect(Object.keys(parsed).slice(0, 2)).toEqual(["truncated", "truncation"]);
+    const truncation = parsed.truncation as { summary: string; arrays: { kept: number; dropped: number }[] };
+    expect(Object.keys(truncation)[0]).toBe("summary");
+    const [entry] = truncation.arrays;
+    expect(truncation.summary).toBe(
+      `Cut to fit 50000 bytes: results.data shows ${entry.kept} of ${entry.kept + entry.dropped}.`,
+    );
+  });
+
+  it("declares the Claude Code result-size annotation for large-result tools", () => {
+    expect(LARGE_RESULT_META).toEqual({ "anthropic/maxResultSizeChars": 150_000 });
+  });
+});
+
+describe("describePostsPage", () => {
+  it("returns null without backend counts", () => {
+    const data = { posts: [{ id: 1 }] };
+    expect(describePostsPage(data, serializeCapped(data))).toBeNull();
+  });
+
+  it("names the page, the remainder and the next offset", () => {
+    const data = { posts: [{ id: 1 }, { id: 2 }], total: 10, returned: 2, offset: 4, limit: 2 };
+    expect(describePostsPage(data, serializeCapped(data))).toBe(
+      "Showing 2 of 10 posts (offset 4). 4 more: call again with offset=6.",
+    );
+  });
+
+  it("says when the page is the last one", () => {
+    const data = { posts: [{ id: 1 }], total: 5, returned: 1, offset: 4, limit: null };
+    expect(describePostsPage(data, serializeCapped(data))).toBe(
+      "Showing 1 of 5 posts (offset 4). This is the last page.",
+    );
+  });
+
+  it("counts the posts the cap dropped and suggests the lean field set", () => {
+    const data = {
+      posts: Array.from({ length: 40 }, (_, i) => ({ id: i, text: "t".repeat(200) })),
+      total: 40,
+      returned: 40,
+      offset: 0,
+      limit: null,
+    };
+    const serialized = serializeCapped(data, 3_000);
+    const kept = (JSON.parse(serialized) as { posts: unknown[] }).posts.length;
+    expect(kept).toBeLessThan(40);
+    expect(describePostsPage(data, serialized)).toBe(
+      `Showing ${kept} of 40 posts (offset 0). ${40 - kept} of the 40 posts fetched were dropped ` +
+        `to fit the 3000-byte response cap. ${40 - kept} more: call again with offset=${kept} ` +
+        `(add fields="lean" to fit more per page).`,
+    );
+  });
+
+  it("drops the lean hint when the page is already lean, and shows 0 when the fallback removed every post", () => {
+    const lean = {
+      posts: Array.from({ length: 40 }, (_, i) => ({ id: i, text: "t".repeat(200) })),
+      total: 40,
+      returned: 40,
+      offset: 0,
+      limit: null,
+      fields: "lean",
+    };
+    expect(describePostsPage(lean, serializeCapped(lean, 3_000))).not.toContain("lean");
+
+    const fallback = { posts: [{ text: "x".repeat(5_000) }, { text: "y".repeat(5_000) }], total: 2, returned: 2, offset: 0, limit: null };
+    const serialized = serializeCapped(fallback, 2_000);
+    expect((JSON.parse(serialized) as { posts?: unknown }).posts).toBeUndefined();
+    expect(describePostsPage(fallback, serialized)).toBe(
+      "Showing 0 of 2 posts (offset 0). 2 of the 2 posts fetched were dropped to fit the " +
+        "2000-byte response cap. 2 more: call again with offset=0 (add fields=\"lean\" to fit more per page).",
+    );
   });
 });
 

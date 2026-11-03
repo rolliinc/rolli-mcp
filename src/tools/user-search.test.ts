@@ -25,6 +25,9 @@ function captureTools(): Record<string, ToolHandler> {
     tool: (...args: unknown[]) => {
       tools[args[0] as string] = args[args.length - 1] as ToolHandler;
     },
+    registerTool: (...args: unknown[]) => {
+      tools[args[0] as string] = args[args.length - 1] as ToolHandler;
+    },
   };
   register(mockServer as unknown as McpServer);
   return tools;

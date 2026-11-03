@@ -1,7 +1,20 @@
 const DEFAULT_POLL_INTERVAL_MS = 5_000;
 const DEFAULT_MAX_POLL_MS = 10 * 60 * 1_000;
 const DEFAULT_RESULTS_SETTLE_MS = 45_000;
-const DEFAULT_MAX_RESPONSE_BYTES = 100_000;
+// claude.ai and Claude Desktop refuse a tool result over ~150,000 characters
+// (https://claude.com/docs/connectors/building), so the cap stays just under
+// it; the posts tools read the rest of a search in pages (offset/limit).
+export const DEFAULT_MAX_RESPONSE_BYTES = 140_000;
+
+/**
+ * Tool `_meta` for the tools that can return a result up to the cap. Claude
+ * Code moves a text result over 50,000 characters to a file unless the tool
+ * declares `anthropic/maxResultSizeChars` (ceiling 500,000); other clients
+ * ignore the key.
+ */
+export const LARGE_RESULT_META: Record<string, unknown> = {
+  "anthropic/maxResultSizeChars": 150_000,
+};
 
 // Module-level knobs. This file is deliberately env-free so it can stay
 // byte-identical between rolli-mcp (stdio, process.env) and rolli-remote-mcp
@@ -233,9 +246,10 @@ const FALLBACK_STRING_LIMIT = 4_000;
 
 const TRUNCATION_NOTE =
   "Response exceeded the size cap, so the largest arrays were shortened from " +
-  "the end (analytics, sentiment, and summary fields are complete). For full " +
-  "post data use get_keyword_search_posts / get_user_search_posts with a " +
-  "platform filter, or narrow the search.";
+  "the end (analytics, sentiment, and summary fields are complete). Read the " +
+  "full post list in pages with get_keyword_search_posts / " +
+  "get_user_search_posts (offset, limit, fields=lean, platform), or narrow " +
+  "the search.";
 
 const textEncoder = new TextEncoder();
 
@@ -278,19 +292,39 @@ function resolveArray(root: unknown, path: string): unknown[] | null {
   return Array.isArray(node) ? node : null;
 }
 
+export interface TruncatedArray {
+  path: string;
+  kept: number;
+  dropped: number;
+}
+
+export interface TruncationReport {
+  summary: string;
+  max_bytes: number;
+  arrays: TruncatedArray[];
+  note: string;
+}
+
+function truncationSummary(cap: number, arrays: TruncatedArray[]): string {
+  const parts = arrays.map(
+    (a) => `${a.path} shows ${a.kept} of ${a.kept + a.dropped}`,
+  );
+  return `Cut to fit ${cap} bytes: ${parts.length > 0 ? parts.join("; ") : "no array could be shortened"}.`;
+}
+
 function truncationBlock(
   cap: number,
   root: unknown,
   droppedByPath: Map<string, number>,
-): Record<string, unknown> {
-  const arrays: { path: string; kept: number; dropped: number }[] = [];
+): TruncationReport {
+  const arrays: TruncatedArray[] = [];
   for (const [path, dropped] of droppedByPath) {
     const arr = resolveArray(root, path);
     if (arr === null) continue; // trimmed array was itself dropped later
     arrays.push({ path: path === "" ? "(root)" : path, kept: arr.length, dropped });
   }
   arrays.sort((a, b) => (a.path < b.path ? -1 : a.path > b.path ? 1 : 0));
-  return { max_bytes: cap, arrays, note: TRUNCATION_NOTE };
+  return { summary: truncationSummary(cap, arrays), max_bytes: cap, arrays, note: TRUNCATION_NOTE };
 }
 
 function scalarFallback(
@@ -298,7 +332,17 @@ function scalarFallback(
   cap: number,
   droppedByPath: Map<string, number>,
 ): string {
-  const out: Record<string, unknown> = {};
+  const out: Record<string, unknown> = {
+    truncated: true,
+    truncation: {
+      ...truncationBlock(cap, root, droppedByPath),
+      note:
+        "Response exceeded the size cap and could not be reduced by array " +
+        "trimming alone; only top-level scalar fields are included. Use the " +
+        "posts tools with offset, limit and fields=lean to retrieve the data " +
+        "in pieces.",
+    },
+  };
   if (root !== null && typeof root === "object" && !Array.isArray(root)) {
     for (const [k, v] of Object.entries(root)) {
       if (v === null || typeof v !== "object") {
@@ -309,14 +353,6 @@ function scalarFallback(
       }
     }
   }
-  out.truncated = true;
-  out.truncation = {
-    ...truncationBlock(cap, root, droppedByPath),
-    note:
-      "Response exceeded the size cap and could not be reduced by array " +
-      "trimming alone; only top-level scalar fields are included. Use the " +
-      "posts tools with a platform filter to retrieve the data in pieces.",
-  };
   return JSON.stringify(out, null, 2);
 }
 
@@ -328,9 +364,9 @@ function scalarFallback(
  * Oversized payloads have their largest arrays trimmed from the END (backend
  * ordering puts top posts first) down to at most `MIN_KEEP` elements each,
  * never touching scalar fields — so counts, sentiment, and summary analytics
- * survive intact. The result is always valid JSON and carries
- * `truncated: true` plus a `truncation` block reporting exactly what was
- * dropped.
+ * survive intact. The result is always valid JSON and opens with
+ * `truncated: true` plus a `truncation` block (summary first) reporting
+ * exactly what was dropped, so a reader sees the cut before the data.
  */
 export function serializeCapped(data: unknown, maxBytes?: number): string {
   const cap = maxBytes ?? maxResponseBytes;
@@ -379,9 +415,56 @@ export function serializeCapped(data: unknown, maxBytes?: number): string {
   const truncation = truncationBlock(cap, root, droppedByPath);
   const out =
     root !== null && typeof root === "object" && !Array.isArray(root)
-      ? { ...(root as Record<string, unknown>), truncated: true, truncation }
-      : { items: root, truncated: true, truncation };
+      ? { truncated: true, truncation, ...(root as Record<string, unknown>) }
+      : { truncated: true, truncation, items: root };
   return JSON.stringify(out, null, 2);
+}
+
+/**
+ * One line for the top of a posts-tool response saying how much of the
+ * search it shows, from the backend's page counts (`total`, `offset`,
+ * `returned`) and the cap's own trimming of the `posts` array, with the call
+ * that fetches the next page. Returns null when the backend sent no counts.
+ */
+export function describePostsPage(
+  data: unknown,
+  serialized: string,
+): string | null {
+  if (data === null || typeof data !== "object" || Array.isArray(data)) {
+    return null;
+  }
+  const obj = data as Record<string, unknown>;
+  if (typeof obj.total !== "number") return null;
+  const total = obj.total;
+  const offset = typeof obj.offset === "number" ? obj.offset : 0;
+  const fetched = Array.isArray(obj.posts) ? obj.posts.length : 0;
+
+  const capped = JSON.parse(serialized) as Record<string, unknown>;
+  const report = capped.truncation as TruncationReport | undefined;
+  const trimmed = capped.truncated === true;
+  const kept = !trimmed
+    ? fetched
+    : Array.isArray(capped.posts)
+      ? capped.posts.length
+      : 0;
+
+  const parts = [`Showing ${kept} of ${total} posts (offset ${offset}).`];
+  if (trimmed) {
+    parts.push(
+      `${fetched - kept} of the ${fetched} posts fetched were dropped to fit ` +
+        `the ${report?.max_bytes ?? "size"}-byte response cap.`,
+    );
+  }
+  const remaining = total - offset - kept;
+  if (remaining > 0) {
+    const lean = obj.fields === "lean" ? "" : " (add fields=\"lean\" to fit more per page)";
+    parts.push(
+      `${remaining} more: call again with offset=${offset + kept}${trimmed ? lean : ""}.`,
+    );
+  } else {
+    parts.push("This is the last page.");
+  }
+  return parts.join(" ");
 }
 
 export type PreflightCreditsResult =

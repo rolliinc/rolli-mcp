@@ -1,26 +1,30 @@
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { z } from "zod";
 import { apiGet } from "../api.js";
-import { errorToText, serializeCapped } from "./_shared.js";
+import { errorToText, serializeCapped, LARGE_RESULT_META } from "./_shared.js";
 
 export function register(server: McpServer) {
-  server.tool(
+  server.registerTool(
     "get_topic_tree",
-    "Get the conversation topic tree for a keyword search. Shows how topics and subtopics are distributed across the search results.",
     {
-      search_id: z.number().int().positive().describe("Keyword search ID"),
-      platform: z
-        .enum([
-          "twitter",
-          "reddit",
-          "bluesky",
-          "youtube",
-          "facebook",
-          "instagram",
-          "threads",
-        ])
-        .optional()
-        .describe("Filter by platform"),
+      description:
+        "Get the conversation topic tree for a keyword search. Shows how topics and subtopics are distributed across the search results.",
+      inputSchema: {
+        search_id: z.number().int().positive().describe("Keyword search ID"),
+        platform: z
+          .enum([
+            "twitter",
+            "reddit",
+            "bluesky",
+            "youtube",
+            "facebook",
+            "instagram",
+            "threads",
+          ])
+          .optional()
+          .describe("Filter by platform"),
+      },
+      _meta: LARGE_RESULT_META,
     },
     async (params) => {
       try {
