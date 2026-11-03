@@ -135,7 +135,7 @@ export function register(server: McpServer) {
           .optional()
           .describe("UUID of a parent run (for follow-ups)"),
         metadata: z
-          .record(z.unknown())
+          .record(z.string(), z.unknown())
           .optional()
           .describe(
             "Arbitrary JSON object stored on the run for your own tracking",
