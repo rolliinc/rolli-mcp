@@ -8,6 +8,7 @@ import {
   preflightCredits,
   serializeCapped,
   stripReportHtml,
+  LARGE_RESULT_META,
 } from "./_shared.js";
 
 const RUN_STATUSES = [
@@ -87,56 +88,60 @@ export function register(server: McpServer) {
     },
   );
 
-  server.tool(
+  server.registerTool(
     "start_agent_run",
-    "Start a Rolli Agent investigation. Submit a plain-English question; the agent plans a search strategy, queries Rolli IQ across platforms, analyzes posts, and produces a markdown intelligence report with signals, evidence links, and a confidence rating. Fails immediately (before starting) if the IQ credit balance is insufficient. Polls inline for up to 2 minutes. If the run finishes in that window, returns the full results; otherwise returns the run ID and a note to fetch the results with get_agent_run (typical run takes 3–5 minutes).",
     {
-      question: z
-        .string()
-        .min(1)
-        .describe(
-          'Plain-English question (e.g., "What is being said about Tesla battery recalls this week?")',
-        ),
-      available_credits: z
-        .number()
-        .int()
-        .min(1)
-        .max(4)
-        .optional()
-        .describe(
-          "Reasoning effort: 1=low, 2=medium, 3=high, 4=max (default). Higher values let the agent perform more searches at higher cost.",
-        ),
-      mode: z
-        .enum(MODES)
-        .optional()
-        .describe("Investigation mode (default: trend_briefing)"),
-      time_window: z
-        .string()
-        .optional()
-        .describe(
-          "Time window to search (default: 7d). Examples: 24h, 7d, 30d",
-        ),
-      platforms: z
-        .array(z.enum(PLATFORMS))
-        .optional()
-        .describe("Platforms to search"),
-      max_post: z
-        .number()
-        .int()
-        .positive()
-        .optional()
-        .describe("Maximum posts per platform (default: 100)"),
-      parent_run_id: z
-        .string()
-        .uuid()
-        .optional()
-        .describe("UUID of a parent run (for follow-ups)"),
-      metadata: z
-        .record(z.unknown())
-        .optional()
-        .describe(
-          "Arbitrary JSON object stored on the run for your own tracking",
-        ),
+      description:
+        "Start a Rolli Agent investigation. Submit a plain-English question; the agent plans a search strategy, queries Rolli IQ across platforms, analyzes posts, and produces a markdown intelligence report with signals, evidence links, and a confidence rating. Fails immediately (before starting) if the IQ credit balance is insufficient. Polls inline for up to 2 minutes. If the run finishes in that window, returns the full results; otherwise returns the run ID and a note to fetch the results with get_agent_run (typical run takes 3–5 minutes).",
+      inputSchema: {
+        question: z
+          .string()
+          .min(1)
+          .describe(
+            'Plain-English question (e.g., "What is being said about Tesla battery recalls this week?")',
+          ),
+        available_credits: z
+          .number()
+          .int()
+          .min(1)
+          .max(4)
+          .optional()
+          .describe(
+            "Reasoning effort: 1=low, 2=medium, 3=high, 4=max (default). Higher values let the agent perform more searches at higher cost.",
+          ),
+        mode: z
+          .enum(MODES)
+          .optional()
+          .describe("Investigation mode (default: trend_briefing)"),
+        time_window: z
+          .string()
+          .optional()
+          .describe(
+            "Time window to search (default: 7d). Examples: 24h, 7d, 30d",
+          ),
+        platforms: z
+          .array(z.enum(PLATFORMS))
+          .optional()
+          .describe("Platforms to search"),
+        max_post: z
+          .number()
+          .int()
+          .positive()
+          .optional()
+          .describe("Maximum posts per platform (default: 100)"),
+        parent_run_id: z
+          .string()
+          .uuid()
+          .optional()
+          .describe("UUID of a parent run (for follow-ups)"),
+        metadata: z
+          .record(z.unknown())
+          .optional()
+          .describe(
+            "Arbitrary JSON object stored on the run for your own tracking",
+          ),
+      },
+      _meta: LARGE_RESULT_META,
     },
     async (params) => {
       try {
@@ -218,11 +223,15 @@ export function register(server: McpServer) {
     },
   );
 
-  server.tool(
+  server.registerTool(
     "get_agent_run",
-    "Get a Rolli Agent run by ID. While running, returns progress (percentage, phase, current tool). Once complete, returns the full markdown report, signals, evidence links, and usage metrics.",
     {
-      id: z.string().uuid().describe("Run UUID"),
+      description:
+        "Get a Rolli Agent run by ID. While running, returns progress (percentage, phase, current tool). Once complete, returns the full markdown report, signals, evidence links, and usage metrics.",
+      inputSchema: {
+        id: z.string().uuid().describe("Run UUID"),
+      },
+      _meta: LARGE_RESULT_META,
     },
     async (params) => {
       try {

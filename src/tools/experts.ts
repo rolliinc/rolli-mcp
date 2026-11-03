@@ -7,6 +7,7 @@ import {
   pollUntilDone,
   resultsPendingPayload,
   serializeCapped,
+  LARGE_RESULT_META,
 } from "./_shared.js";
 
 const api = { get: apiGet };
@@ -49,17 +50,21 @@ export function register(server: McpServer) {
     },
   );
 
-  server.tool(
+  server.registerTool(
     "expert_search",
-    "Find experts matching a natural-language query using Rolli's AI-driven recommendation engine. Polls until the search is complete and returns the full list of recommended experts (name, professional title, location, contact info, expertise keywords, and an AI-generated summary explaining why each expert matches). A status of results_pending means the search succeeded but results are still being written; fetch them with get_expert_search.",
     {
-      query: z
-        .string()
-        .min(1)
-        .max(500)
-        .describe(
-          "Natural-language description of the topic, expertise area, or expert profile to find (e.g. \"AI ethics researchers\", \"climate scientists who can speak on tipping points\")",
-        ),
+      description:
+        "Find experts matching a natural-language query using Rolli's AI-driven recommendation engine. Polls until the search is complete and returns the full list of recommended experts (name, professional title, location, contact info, expertise keywords, and an AI-generated summary explaining why each expert matches). A status of results_pending means the search succeeded but results are still being written; fetch them with get_expert_search.",
+      inputSchema: {
+        query: z
+          .string()
+          .min(1)
+          .max(500)
+          .describe(
+            "Natural-language description of the topic, expertise area, or expert profile to find (e.g. \"AI ethics researchers\", \"climate scientists who can speak on tipping points\")",
+          ),
+      },
+      _meta: LARGE_RESULT_META,
     },
     async (params) => {
       try {
@@ -121,11 +126,15 @@ export function register(server: McpServer) {
     },
   );
 
-  server.tool(
+  server.registerTool(
     "get_expert_search",
-    "Get results for an expert search by ID. Returns search status and, once complete, the array of recommended experts with their profiles and AI-generated match summaries. results_pending: true means the search succeeded but the backend is still writing results; retry in a few seconds.",
     {
-      id: z.number().int().positive().describe("Expert search ID"),
+      description:
+        "Get results for an expert search by ID. Returns search status and, once complete, the array of recommended experts with their profiles and AI-generated match summaries. results_pending: true means the search succeeded but the backend is still writing results; retry in a few seconds.",
+      inputSchema: {
+        id: z.number().int().positive().describe("Expert search ID"),
+      },
+      _meta: LARGE_RESULT_META,
     },
     async (params) => {
       try {
