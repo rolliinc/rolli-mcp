@@ -145,6 +145,7 @@ describe("user_search", () => {
       platform: "instagram",
       start_date: "2026-01-01",
       end_date: "2026-02-01",
+      enable_ai: false,
     });
     await vi.advanceTimersByTimeAsync(5000);
     await promise;
@@ -154,6 +155,7 @@ describe("user_search", () => {
       platform: "instagram",
       start_date: "2026-01-01",
       end_date: "2026-02-01",
+      enable_ai: false,
     });
   });
 
