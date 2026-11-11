@@ -79,6 +79,12 @@ export function register(server: McpServer) {
           .regex(/^\d{4}-\d{2}-\d{2}$/, "Must be YYYY-MM-DD")
           .optional()
           .describe("End date (YYYY-MM-DD)"),
+        enable_ai: z
+          .boolean()
+          .optional()
+          .describe(
+            "Whether Rolli runs its AI analysis on the posts: sentiment, summaries and the topic tree (default: true). Pass false to collect the raw posts only, which is faster; use it when you will analyse the posts yourself. A search made with false has no topic tree.",
+          ),
       },
       _meta: LARGE_RESULT_META,
     },
@@ -90,6 +96,7 @@ export function register(server: McpServer) {
         };
         if (params.start_date) body.start_date = params.start_date;
         if (params.end_date) body.end_date = params.end_date;
+        if (params.enable_ai !== undefined) body.enable_ai = params.enable_ai;
 
         const createResult = (await apiPost(
           "/iq/user_search",

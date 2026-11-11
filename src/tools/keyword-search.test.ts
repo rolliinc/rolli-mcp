@@ -136,6 +136,7 @@ describe("keyword_search", () => {
       start_date: "2026-01-01",
       end_date: "2026-02-01",
       max_post: 50,
+      enable_ai: false,
     });
     await vi.advanceTimersByTimeAsync(5000);
     await promise;
@@ -146,6 +147,7 @@ describe("keyword_search", () => {
       start_date: "2026-01-01",
       end_date: "2026-02-01",
       max_post: 50,
+      enable_ai: false,
     });
   });
 
