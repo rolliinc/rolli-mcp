@@ -26,6 +26,13 @@ const QUERY_DESCRIPTION =
   '(Husted OR "Ohio Senate") NOT satire. For broad topics, run several ' +
   "focused boolean searches rather than one wide query.";
 
+// A whole UTC day, or on X only a Unix timestamp in seconds for a sub-day
+// window. The API refuses a timestamp on any other platform.
+const SEARCH_DATE = z.union([
+  z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "Must be YYYY-MM-DD"),
+  z.number().int().min(100000000).max(9999999999),
+]);
+
 export function register(server: McpServer) {
   server.tool(
     "list_keyword_searches",
@@ -84,23 +91,35 @@ export function register(server: McpServer) {
           .describe(
             "Platforms to search (default: twitter, reddit, bluesky, youtube)",
           ),
-        start_date: z
-          .string()
-          .regex(/^\d{4}-\d{2}-\d{2}$/, "Must be YYYY-MM-DD")
-          .optional()
-          .describe("Start date (YYYY-MM-DD)"),
-        end_date: z
-          .string()
-          .regex(/^\d{4}-\d{2}-\d{2}$/, "Must be YYYY-MM-DD")
-          .optional()
-          .describe("End date (YYYY-MM-DD)"),
+        start_date: SEARCH_DATE.optional().describe(
+          'Start of the period: a date (YYYY-MM-DD), read as a whole UTC day. On a search of X only (platforms: ["twitter"]) it can instead be a Unix timestamp in seconds, a number, to search down to the second.',
+        ),
+        end_date: SEARCH_DATE.optional().describe(
+          "End of the period, in the same format as start_date: a date includes that whole day, a Unix timestamp is the exact end of the window. When one of the two is a Unix timestamp the other must be one too, and the search must be of X only.",
+        ),
         max_post: z
           .number()
           .int()
           .positive()
-          .max(10000)
+          .max(1000)
           .optional()
-          .describe("Maximum number of posts to retrieve (default: 100)"),
+          .describe(
+            'Maximum number of posts to retrieve per platform (default: 100). A search of X only (platforms: ["twitter"]) takes up to 1000; a search that includes any other platform takes up to 100, and a larger number is lowered to 100.',
+          ),
+        sort_by: z
+          .enum(["engagement", "time"])
+          .optional()
+          .describe(
+            'The order X posts are collected in, which decides which posts come back when there are more than max_post. "engagement" returns the most engaged posts of the period: do not add min_faves: to the query with it, the threshold is set for you. "time" returns the most recent posts: add min_faves:N to the query to set your own threshold.',
+          ),
+        sentiment_target: z
+          .string()
+          .min(1)
+          .max(200)
+          .optional()
+          .describe(
+            'What each post\'s sentiment is measured towards, for example "data centers". Without it the AI analysis picks a target from the posts. Has no effect with enable_ai: false.',
+          ),
         enable_ai: z
           .boolean()
           .optional()
@@ -118,6 +137,9 @@ export function register(server: McpServer) {
         if (params.end_date) body.end_date = params.end_date;
         if (params.max_post !== undefined) body.max_post = params.max_post;
         if (params.enable_ai !== undefined) body.enable_ai = params.enable_ai;
+        if (params.sentiment_target)
+          body.sentiment_target = params.sentiment_target;
+        if (params.sort_by) body.sort_by = params.sort_by;
 
         const createResult = (await apiPost(
           "/iq/keyword_search",
