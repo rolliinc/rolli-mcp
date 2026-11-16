@@ -151,6 +151,30 @@ describe("keyword_search", () => {
     });
   });
 
+  it("sends Unix timestamps as numbers, the sentiment target and the sort order", async () => {
+    mockApiPost.mockResolvedValue({ message: "queued" });
+
+    await tools.keyword_search({
+      query: "data centers",
+      platforms: ["twitter"],
+      start_date: 1794747600,
+      end_date: 1794751200,
+      max_post: 1000,
+      sentiment_target: "data centers",
+      sort_by: "engagement",
+    });
+
+    expect(mockApiPost).toHaveBeenCalledWith("/iq/keyword_search", {
+      query: "data centers",
+      platforms: ["twitter"],
+      start_date: 1794747600,
+      end_date: 1794751200,
+      max_post: 1000,
+      sentiment_target: "data centers",
+      sort_by: "engagement",
+    });
+  });
+
   it("resolves without timer advancement when terminal on first poll", async () => {
     mockApiPost.mockResolvedValue({ id: 105 });
     mockApiGet.mockResolvedValue({ id: 105, status: "finished", results: {} });
@@ -164,7 +188,11 @@ describe("keyword_search", () => {
 
   it("returns results_pending when finished but results never materialize", async () => {
     mockApiPost.mockResolvedValue({ id: 106 });
-    mockApiGet.mockResolvedValue({ id: 106, status: "finished", results: null });
+    mockApiGet.mockResolvedValue({
+      id: 106,
+      status: "finished",
+      results: null,
+    });
 
     const promise = tools.keyword_search({ query: "test" });
     // Settle window is 45s; polls run every 5s.
@@ -184,7 +212,11 @@ describe("keyword_search", () => {
     mockApiPost.mockResolvedValue({ id: 107 });
     mockApiGet
       .mockResolvedValueOnce({ id: 107, status: "finished" })
-      .mockResolvedValueOnce({ id: 107, status: "finished", results: { total: 3 } });
+      .mockResolvedValueOnce({
+        id: 107,
+        status: "finished",
+        results: { total: 3 },
+      });
 
     const promise = tools.keyword_search({ query: "test" });
     await vi.advanceTimersByTimeAsync(5000);
